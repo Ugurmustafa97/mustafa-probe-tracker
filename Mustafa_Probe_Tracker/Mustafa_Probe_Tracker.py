@@ -39,6 +39,12 @@ class Mustafa_Probe_TrackerWidget(ScriptedLoadableModuleWidget):
     self.probeButton.enabled = True
     loadingFormLayout.addRow(self.probeButton)
 
+    # "Launch the Plus Server" Button
+    self.launchPlusServerButton = qt.QPushButton("Launch the Plus Server")
+    self.launchPlusServerButton.toolTip = "Starts the Plus Server"
+    self.launchPlusServerButton.enabled = True
+    loadingFormLayout.addRow(self.launchPlusServerButton)
+
     # "Load Transformation and Apply It" Button
     self.transformationButton = qt.QPushButton("Load Transformation and Apply It")
     self.transformationButton.toolTip = "Load the Transformation."
@@ -57,12 +63,6 @@ class Mustafa_Probe_TrackerWidget(ScriptedLoadableModuleWidget):
     self.load3DModelButton.enabled = True
     loadingFormLayout.addRow(self.load3DModelButton)
 
-    # Do hierarchy setting again
-    #self.setHierarchyButton = qt.QPushButton("Set the hierarchy")
-    #self.setHierarchyButton.toolTip = "Sets the hieararchy again for tracking"
-    #self.setHierarchyButton.enabled = True
-    #loadingFormLayout.addRow(self.setHierarchyButton)
-
     # "Stop the camera" Button
     self.stopTrackerButton = qt.QPushButton("Stop the camera")
     self.stopTrackerButton.toolTip = "Stops the camera"
@@ -71,11 +71,12 @@ class Mustafa_Probe_TrackerWidget(ScriptedLoadableModuleWidget):
     
     # Connections for Buttons
     self.probeButton.connect('clicked(bool)',self.logic.loadProbeModel)
+    #self.launchPlusServerButton.connect('clicked(bool)', self.logic.launchPlusServer)
     self.transformationButton.connect('clicked(bool)', self.logic.loadPivotTransform)
     self.markerTrackerButton.connect('clicked(bool)', self.logic.startCamera)
-    #self.setHierarchyButton.connect('clicked(bool)', self.logic.setHierarcy)
-    self.stopTrackerButton.connect('clicked(bool)', self.logic.stopCamera)
     self.load3DModelButton.connect('clicked(bool)', self.logic.load3DModel)
+    self.stopTrackerButton.connect('clicked(bool)', self.logic.stopCamera)
+
     
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -86,47 +87,71 @@ class Mustafa_Probe_TrackerLogic(ScriptedLoadableModuleLogic):
 
   def __init__(self):
     self.trackerNode = None
-    #self.markerModel = None
+    self.transformNode = None
+    self.markerModel = None
+    self.cameraState = False
+    self.launcherNode = None
+
 
   # This function loads the Needle Model that we created previously.
   def loadProbeModel(self):
     slicer.util.loadModel("C:\Users\Mustafa Ugur\Documents\NeedleModel.vtk")  
+  """
+  # This function launchs the Plus Server
+  def launchPlusServer(self):
+    fn = "C:\Users\Mustafa Ugur\PlusApp-2.8.0.20190617-Win64\config\PlusDeviceSet_Server_OpticalMarkerTracker_Mmf.xml"
+    with open(fn, 'r') as file:
+      configText = file.read()
+
+
+
+    logging.info("Empty now!")
+  """
 
   # This function loads the transformation from the pivot calibration that we
   # done previously sets the hierarcy between needle and transformation.
   def loadPivotTransform(self):
     slicer.util.loadTransform("C:\Users\Mustafa Ugur\Documents\NeedleTipToMarker.h5")
     needleModel = slicer.util.getNode('NeedleModel')
-    transformNode = slicer.util.getNode('NeedleTipToMarker')
-    needleModel.SetAndObserveTransformNodeID(transformNode.GetID())
-  
-  # This fuction starts camera for tracking.
-  def startCamera(self):
-    # Starting the camera and create a node for camera.
+    self.transformNode = slicer.util.getNode('NeedleTipToMarker')
+    needleModel.SetAndObserveTransformNodeID(self.transformNode.GetID())
+
     if not self.trackerNode:
       self.trackerNode = slicer.vtkMRMLIGTLConnectorNode()
       slicer.mrmlScene.AddNode(self.trackerNode)
-      self.trackerNode.SetName('markerTracker')  
-    
+      self.trackerNode.SetName('markerTracker')
+      
     self.trackerNode.Start()
+    self.cameraState = True
+
+  # This fuction starts camera for tracking.
+  def startCamera(self):
+    # Starting the camera and create a node for camera.
+    """
+    if not self.trackerNode:
+      self.trackerNode = slicer.vtkMRMLIGTLConnectorNode()
+      slicer.mrmlScene.AddNode(self.trackerNode)
+      self.trackerNode.SetName('markerTracker')
+    """
+    if self.cameraState is False:
+      self.trackerNode.Start()
 
     try:
-      transformNode = slicer.util.getNode('NeedleTipToMarker')
-      markerModel = slicer.util.getNode('Marker4ToTracker')
-      transformNode.SetAndObserveTransformNodeID(markerModel.GetID())
+      self.setHierarcy()
     except:
       print("Marker4ToTracker Exepcion occured, please show the chechkerboard to camera and press Start the Camera Button Again")
     
-  """
+
   def setHierarcy(self): 
     # Setting the hierarchy again
-    transformNode = slicer.util.getNode('NeedleTipToMarker')
-    markerModel = slicer.util.getNode('Marker4ToTracker')
-    transformNode.SetAndObserveTransformNodeID(markerModel.GetID())
-  """
+    self.transformNode = slicer.util.getNode('NeedleTipToMarker')
+    self.markerModel = slicer.util.getNode('Marker4ToTracker')
+    self.transformNode.SetAndObserveTransformNodeID(self.markerModel.GetID())
+
   # This function stops the camera.
   def stopCamera(self):
     self.trackerNode.Stop()
+    self.cameraState = False
 
   # This function loads the 3D file was created for surface tracking.
   def load3DModel(self):
