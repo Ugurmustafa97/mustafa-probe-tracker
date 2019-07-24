@@ -74,11 +74,9 @@ class Mustafa_Probe_TrackerWidget(ScriptedLoadableModuleWidget):
     self.transformationButton.connect('clicked(bool)', self.logic.loadPivotTransform)
     self.launchPlusServerButton.connect('clicked(bool)', self.logic.launchPlusServer)
     self.stopPlusServerButton.connect('clicked(bool)',self.logic.stopPlusServer)
-    #self.markerTrackerButton.connect('clicked(bool)', self.logic.startCamera) # startCamera function changed to startTracking
     self.startTheTrackingButton.connect('clicked(bool)', self.logic.startTracking)
-    #self.stopTrackingButton.connect('clicked(bool)', self.logic.stopTracking) # stopTracking function changed to stopPlusServer
     self.load3DModelButton.connect('clicked(bool)', self.logic.load3DModel)
-    #self.stopTrackerButton.connect('clicked(bool)', self.logic.stopCamera) # stopCamera function changed to stopTracking
+
     
     # Add vertical spacer
     self.layout.addStretch(1)
